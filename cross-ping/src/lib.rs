@@ -1,7 +1,7 @@
 #![no_std]
 
 #[cfg(target_arch = "wasm32")]
-pub use cross_ping_app::wasm::*;
+pub use cross_ping_app::*;
 
 #[cfg(feature = "wasm-binary")]
 #[cfg(not(target_arch = "wasm32"))]

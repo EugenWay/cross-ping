@@ -2,6 +2,7 @@
 #![allow(static_mut_refs)]
 
 use sails_rs::prelude::*;
+use sails_rs::gstd::{exec, msg};
 use gbuiltin_eth_bridge::{Request as BridgeRequest, Response as BridgeResponse};
 
 
@@ -33,7 +34,7 @@ pub enum Error {
 
 #[derive(Debug, Encode, Decode, TypeInfo)]
 pub struct PingSent {
-    pub sender: gstd::ActorId,
+    pub sender: ActorId,
     pub nonce: Option<u64>,
 }
 
@@ -45,14 +46,14 @@ impl CrossPingService {
         let state = unsafe { STATE.as_ref().expect("State not initialized") };
         let destination = state.destination.ok_or(Error::DestinationNotInitialized)?;
 
-        let sender = gstd::exec::program_id();
+        let sender = exec::program_id();
         let payload = sender.as_ref().to_vec();
 
-        let bridge_actor_id = gstd::ActorId::from(BRIDGE_ACTOR_ID);
+        let bridge_actor_id = ActorId::from(BRIDGE_ACTOR_ID);
 
         let request = BridgeRequest::SendEthMessage { destination, payload }.encode();
 
-        gstd::msg::send_bytes_with_gas_for_reply(
+        msg::send_bytes_with_gas_for_reply(
             bridge_actor_id,
             request,
             GAS_TO_SEND_REQUEST,
@@ -63,12 +64,12 @@ impl CrossPingService {
         .up_to(None)
         .map_err(|_| Error::BridgeReplyFailed)?
         .handle_reply(move || {
-            let reply_bytes = gstd::msg::load_bytes().expect("Unable to load reply bytes");
+            let reply_bytes = msg::load_bytes().expect("Unable to load reply bytes");
             let reply = BridgeResponse::decode(&mut &reply_bytes[..])
                 .expect("Failed to decode bridge reply");
             match reply {
                 BridgeResponse::EthMessageQueued { nonce, .. } => {
-                    gstd::msg::reply(
+                    msg::reply(
                         PingSent {
                             sender,
                             nonce: Some(nonce.as_u64()),
@@ -87,7 +88,7 @@ impl CrossPingService {
 
 pub struct CrossPingProgram;
 
-
+#[sails_rs::program]
 impl CrossPingProgram {
     pub fn new(destination: H160) -> Self {
         unsafe { STATE = Some(State { destination: Some(destination) }); }

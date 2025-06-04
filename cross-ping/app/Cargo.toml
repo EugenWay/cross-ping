@@ -3,19 +3,11 @@ name = "cross-ping-app"
 version = "0.1.0"
 edition = "2024"
 
-[lib]
-crate-type = ["cdylib", "rlib"]
-
 [dependencies]
-sails-rs = { workspace = true }
-gstd = { workspace = true }
-gbuiltin-eth-bridge = { workspace = true }
-scale-info = { workspace = true }
-parity-scale-codec = { workspace = true }
-
-[build-dependencies]
-sails-rs = { workspace = true, features = ["wasm-builder"] }
-sails-idl-gen = { workspace = true }
+sails-rs = "0.8.1"
+gbuiltin-eth-bridge = "1.8.1"
+parity-scale-codec = { version = "3.6.4", default-features = false, features = ["derive"] }
+scale-info = { version = "2.10.0", default-features = false }
 
 [features]
 default = []
