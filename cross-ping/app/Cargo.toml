@@ -1,0 +1,22 @@
+[package]
+name = "cross-ping-app"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+sails-rs = { workspace = true }
+gstd = { workspace = true }
+gbuiltin-eth-bridge = { workspace = true }
+scale-info = { workspace = true }
+parity-scale-codec = { workspace = true }
+
+[build-dependencies]
+sails-rs = { workspace = true, features = ["wasm-builder"] }
+sails-idl-gen = { workspace = true }
+
+[features]
+default = []
+wasm-binary = []

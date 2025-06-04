@@ -1,0 +1,15 @@
+[workspace]
+resolver = "2"
+members = [
+    "app",
+    "client"
+]
+
+[workspace.dependencies]
+sails-rs = { version = "0.8.1", features = ["idl-gen"] }
+gstd = "1.8.1"
+gbuiltin-eth-bridge = "1.8.1"
+scale-info = { version = "2.10.0", default-features = false }
+parity-scale-codec = { version = "3.6.4", default-features = false, features = ["derive"] }
+sails-idl-gen = "0.8.1"
+sails-client-gen = "0.8.1"
