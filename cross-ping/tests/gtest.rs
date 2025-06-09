@@ -1,63 +1,33 @@
-use sails_rs::{calls::*, gtest::{calls::*, System}};
-
+use sails_rs::{calls::*, gtest::System};
+use sails_rs::gtest::calls::GTestRemoting;
+use sails_rs::prelude::*;
 use cross_ping_client::traits::*;
 
 const ACTOR_ID: u64 = 42;
+const FAKE_DEST: H160 = H160([0x11; 20]); // Fake Ethereum destination
 
 #[tokio::test]
-async fn do_something_works() {
+async fn send_ping_works() {
     let system = System::new();
     system.init_logger_with_default_filter("gwasm=debug,gtest=info,sails_rs=debug");
     system.mint_to(ACTOR_ID, 100_000_000_000_000);
     let remoting = GTestRemoting::new(system, ACTOR_ID.into());
 
-    // Submit program code into the system
     let program_code_id = remoting.system().submit_code(cross_ping::WASM_BINARY);
-
     let program_factory = cross_ping_client::CrossPingFactory::new(remoting.clone());
 
-    let program_id = program_factory
-        .new() // Call program's constructor (see app/src/lib.rs:29)
-        .send_recv(program_code_id, b"salt")
-        .await
-        .unwrap();
+    let tx = program_factory.new(FAKE_DEST).send(program_code_id, b"salt").await.expect("send failed");
+    let program_id = tx.recv().await.expect("recv failed");
+
+    println!("✔ Program deployed at: {:?}", program_id);
 
     let mut service_client = cross_ping_client::CrossPing::new(remoting.clone());
+    let result = service_client.send_ping().send_recv(program_id).await;
 
-    let result = service_client
-        .do_something() // Call service's method (see app/src/lib.rs:14)
-        .send_recv(program_id)
-        .await
-        .unwrap();
-
-    assert_eq!(result, "Hello from CrossPing!".to_string());
-}
-
-#[tokio::test]
-async fn get_something_works() {
-    let system = System::new();
-    system.init_logger_with_default_filter("gwasm=debug,gtest=info,sails_rs=debug");
-    system.mint_to(ACTOR_ID, 100_000_000_000_000);
-    let remoting = GTestRemoting::new(system, ACTOR_ID.into());
-
-    // Submit program code into the system
-    let program_code_id = remoting.system().submit_code(cross_ping::WASM_BINARY);
-
-    let program_factory = cross_ping_client::CrossPingFactory::new(remoting.clone());
-
-    let program_id = program_factory
-        .new() // Call program's constructor (see app/src/lib.rs:29)
-        .send_recv(program_code_id, b"salt")
-        .await
-        .unwrap();
-
-    let service_client = cross_ping_client::CrossPing::new(remoting.clone());
-
-    let result = service_client
-        .get_something() // Call service's query (see app/src/lib.rs:19)
-        .recv(program_id)
-        .await
-        .unwrap();
-
-    assert_eq!(result, "Hello from CrossPing!".to_string());
+    match result {
+        Ok(reply) => {
+            println!("✔ send_ping succeeded, reply: {:?}", reply);
+        },
+        Err(e) => std::panic!("✘ send_ping failed: {:?}", e),
+    }
 }

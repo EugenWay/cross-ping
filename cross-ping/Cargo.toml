@@ -19,7 +19,9 @@ sails-idl-gen = "0.8.1"
 cross-ping = { path = ".", features = ["wasm-binary"] }
 cross-ping-client = { path = "client" }
 sails-rs = { version = "0.8.1", features = ["gtest"] }
+gtest = "1.8.1"
 tokio = { version = "1.41", features = ["rt", "macros"] }
+parity-scale-codec = "3"
 
 [features]
 wasm-binary = []

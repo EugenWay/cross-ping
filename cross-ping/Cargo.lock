@@ -810,6 +810,8 @@ dependencies = [
  "cross-ping",
  "cross-ping-app",
  "cross-ping-client",
+ "gtest",
+ "parity-scale-codec",
  "sails-idl-gen",
  "sails-rs",
  "tokio",

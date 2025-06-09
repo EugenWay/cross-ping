@@ -14,9 +14,9 @@ const BRIDGE_ACTOR_ID: [u8; 32] = [
     0x39, 0xf2, 0x18, 0x15, 0x1b, 0x7a, 0xcd, 0xbf
 ];
 
-const GAS_TO_SEND_REQUEST: u64 = 100_000_000;
+const GAS_TO_SEND_REQUEST: u64 = 2_500_000_000;
 const FEE_BRIDGE: u128 = 0;
-const GAS_FOR_REPLY_DEPOSIT: u64 = 10_000_000;
+const GAS_FOR_REPLY_DEPOSIT: u64 = 1_500_000_000;
 
 #[derive(Default, Encode, Decode, TypeInfo)]
 pub struct State {
@@ -36,13 +36,14 @@ pub enum Error {
 pub struct PingSent {
     pub sender: ActorId,
     pub nonce: Option<u64>,
+    pub message_hash: H256,
 }
 
 pub struct CrossPingService;
 
 #[service]
 impl CrossPingService {
-    pub fn send_ping(&self) -> Result<(), Error> {
+    pub fn send_ping(&mut self) -> Result<(), Error> {
         let state = unsafe { STATE.as_ref().expect("State not initialized") };
         let destination = state.destination.ok_or(Error::DestinationNotInitialized)?;
 
@@ -68,11 +69,12 @@ impl CrossPingService {
             let reply = BridgeResponse::decode(&mut &reply_bytes[..])
                 .expect("Failed to decode bridge reply");
             match reply {
-                BridgeResponse::EthMessageQueued { nonce, .. } => {
+                BridgeResponse::EthMessageQueued { nonce, hash } => {
                     msg::reply(
                         PingSent {
                             sender,
                             nonce: Some(nonce.as_u64()),
+                            message_hash: hash,
                         },
                         0,
                     )
