@@ -39,9 +39,14 @@ pub struct PingSent {
     pub message_hash: H256,
 }
 
+#[derive(Debug, Encode, Decode, TypeInfo)]
+pub enum Event {
+    PingSent(PingSent),
+}
+
 pub struct CrossPingService;
 
-#[service]
+#[service(events = Event)]
 impl CrossPingService {
     pub fn send_ping(&mut self) -> Result<(), Error> {
         let state = unsafe { STATE.as_ref().expect("State not initialized") };
