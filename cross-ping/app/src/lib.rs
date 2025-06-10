@@ -65,8 +65,6 @@ impl CrossPingService {
             GAS_FOR_REPLY_DEPOSIT,
         )
         .map_err(|_| Error::BridgeSendFailed)?
-        .up_to(sails_rs::Some(1000))
-        .map_err(|_| Error::BridgeReplyFailed)?
         .await
         .map_err(|_| Error::BridgeReplyFailed)?;
 
