@@ -14,9 +14,9 @@ const BRIDGE_ACTOR_ID: [u8; 32] = [
     0x39, 0xf2, 0x18, 0x15, 0x1b, 0x7a, 0xcd, 0xbf
 ];
 
-const GAS_TO_SEND_REQUEST: u64 = 2_500_000_000;
+const GAS_TO_SEND_REQUEST: u64 = 200_000_000_000;
 const FEE_BRIDGE: u128 = 0;
-const GAS_FOR_REPLY_DEPOSIT: u64 = 1_500_000_000;
+const GAS_FOR_REPLY_DEPOSIT: u64 = 200_000_000_000;
 
 #[derive(Default, Encode, Decode, TypeInfo)]
 pub struct State {
@@ -48,18 +48,16 @@ pub struct CrossPingService;
 
 #[service(events = Event)]
 impl CrossPingService {
-    pub fn send_ping(&mut self) -> Result<(), Error> {
+    pub async fn send_ping(&mut self) -> Result<(), Error> {
         let state = unsafe { STATE.as_ref().expect("State not initialized") };
         let destination = state.destination.ok_or(Error::DestinationNotInitialized)?;
-
         let sender = exec::program_id();
         let payload = sender.as_ref().to_vec();
-
         let bridge_actor_id = ActorId::from(BRIDGE_ACTOR_ID);
 
         let request = BridgeRequest::SendEthMessage { destination, payload }.encode();
 
-        msg::send_bytes_with_gas_for_reply(
+        let reply_bytes = msg::send_bytes_with_gas_for_reply(
             bridge_actor_id,
             request,
             GAS_TO_SEND_REQUEST,
@@ -67,27 +65,23 @@ impl CrossPingService {
             GAS_FOR_REPLY_DEPOSIT,
         )
         .map_err(|_| Error::BridgeSendFailed)?
-        .up_to(None)
+        .up_to(sails_rs::Some(1000))
         .map_err(|_| Error::BridgeReplyFailed)?
-        .handle_reply(move || {
-            let reply_bytes = msg::load_bytes().expect("Unable to load reply bytes");
-            let reply = BridgeResponse::decode(&mut &reply_bytes[..])
-                .expect("Failed to decode bridge reply");
-            match reply {
-                BridgeResponse::EthMessageQueued { nonce, hash } => {
-                    msg::reply(
-                        PingSent {
-                            sender,
-                            nonce: Some(nonce.as_u64()),
-                            message_hash: hash,
-                        },
-                        0,
-                    )
-                    .expect("Failed to emit PingSent event");
-                }
-            }
-        })
+        .await
         .map_err(|_| Error::BridgeReplyFailed)?;
+
+        let reply = BridgeResponse::decode(&mut &reply_bytes[..])
+            .map_err(|_| Error::InvalidBridgeResponse)?;
+
+        match reply {
+            BridgeResponse::EthMessageQueued { nonce, hash } => {
+                self.emit_event(Event::PingSent(PingSent {
+                    sender,
+                    nonce: Some(nonce.as_u64()),
+                    message_hash: hash,
+                })).expect("Failed to emit PingSent event");
+            }
+        }
 
         Ok(())
     }
