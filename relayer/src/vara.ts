@@ -11,21 +11,20 @@ export interface PingSentEvent {
 }
 
 export let varaProvider: GearApi | null = null;
-let sails: Sails;
+export let sails: Sails;
 
 export async function connectVara(): Promise<GearApi> {
-  if (varaProvider) return varaProvider;
+    if (varaProvider) return varaProvider;
 
-  varaProvider = await GearApi.create({ providerAddress: VARA_RPC_URL });
-  console.log('✅ Connected to Vara!');
+    varaProvider = await GearApi.create({ providerAddress: VARA_RPC_URL });
+    const parser = await SailsIdlParser.new();
+    sails = new Sails(parser);
+    sails.parseIdl(CROSS_PING_IDL);
+    sails.setApi(varaProvider);
+    sails.setProgramId(CROSS_PING_PROGRAM_ID);
 
-  const parser = await SailsIdlParser.new();
-  sails = new Sails(parser);
-  sails.parseIdl(CROSS_PING_IDL);
-  sails.setApi(varaProvider);
-  sails.setProgramId(CROSS_PING_PROGRAM_ID as `0x${string}`);
-
-  return varaProvider;
+    console.log('✅ Connected to Vara!');
+    return varaProvider;
 }
 
 export async function listenMerkleRootChanged(api: GearApi, onRoot: (root: string) => void) {
@@ -45,32 +44,14 @@ export async function listenMerkleRootChanged(api: GearApi, onRoot: (root: strin
   return unsub;
 }
 
-export function listenPingSent(api: GearApi, onPingSent: (event: PingSentEvent) => void) {
-  const unsub = api.gearEvents.subscribeToGearEvent(
-    'UserMessageSent',
-    ({ data: { message } }) => {
-      const { source, payload } = message;
-
-      if (source.toString() !== CROSS_PING_PROGRAM_ID) return;
-
-      let decoded: any;
-
-      try {
-        decoded = sails.services.CrossPing.events.PingSent.decode(payload.toHex());
-      } catch (e) {
-        console.warn('Failed to decode PingSent payload:', e);
-        return;
-      }
-
-      onPingSent({
-        sender: decoded.sender,
-        nonce: decoded.nonce,
-        messageHash: decoded.message_hash,
-      });
-    },
-  );
-
-  return unsub;
+export async function listenPingSent(sails: Sails, onPingSent: (event: PingSentEvent) => void) {
+    sails.services.CrossPing.events.PingSent.subscribe((data: any) => {
+        onPingSent({
+        sender: data.sender,
+        nonce: data.nonce,
+        messageHash: data.message_hash,
+        });
+    });
 }
 
 export async function getMerkleProof(api: GearApi, messageHash: HexString): Promise<Proof> {

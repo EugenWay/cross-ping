@@ -1,4 +1,4 @@
-import { connectVara, listenMerkleRootChanged, listenPingSent, getMerkleProof } from './vara';
+import { connectVara, sails, listenMerkleRootChanged, listenPingSent, getMerkleProof } from './vara';
 import { connectEthereum } from './ethereum';
 
 interface PingProof {
@@ -24,9 +24,9 @@ async function main() {
             latestMerkleRoot = root;
         });
 
-        await listenPingSent(varaApi, async (event) => {
+        await listenPingSent(sails, async (event: any) => {
             if (!latestMerkleRoot) {
-                console.warn('❗ Merkle Root ещё не получен!');
+                console.warn(' Merkle Root ещё не получен!');
                 return;
             }
 
