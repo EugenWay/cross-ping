@@ -1,44 +1,50 @@
 import { connectVara, sails, listenMerkleRootChanged, listenPingSent, getMerkleProof } from './vara';
-import { connectEthereum } from './ethereum';
+import { connectEthereum, listenRelayerProxy } from './ethereum';
+
+import { PingSentEvent } from './types';
 
 interface PingProof {
+    sender: string;
     messageHash: string;
     nonce: number | null;
     merkleRoot: string;
     proof: any;
 }
 
-let latestMerkleRoot: string | null = null;
+let latestVaraMerkleRoot: string | null = null;
+let latestEthereumMerkleRoot: string | null = null;
 const pingProofs: PingProof[] = [];
 
 async function main() {
     try {
+        // 1. Connect to Vara & Ethereum
         const varaApi = await connectVara();
         const ethApi = await connectEthereum();
 
-        console.log('Connected to Vara and Ethereum networks');
-        console.log('Started listening for events...');
-
-        await listenMerkleRootChanged(varaApi, (root) => {
-            console.log('✅ Received Merkle Root:', root);
-            latestMerkleRoot = root;
+        // 2. Listen to MerkleRoot updates from Vara
+        listenMerkleRootChanged(varaApi, (root) => {
+            console.log('✅ [Vara] New Merkle Root:', root);
+            latestVaraMerkleRoot = root;
         });
 
-        await listenPingSent(sails, async (event: any) => {
-            if (!latestMerkleRoot) {
-                console.warn(' Merkle Root ещё не получен!');
+        // 3. Listen to MerkleRootSubmitted events from Ethereum
+        listenRelayerProxy(ethApi, (root) => {
+            // check if the root is the same as the latestMerkleRoot with our massages
+            if (root === latestVaraMerkleRoot) {
+                console.log('✅ [Ethereum] MerkleRootSubmitted:', root);
+                latestEthereumMerkleRoot = root;
+            }
+        });
+
+        // 4. Listen to PingSent events in Vara & collect proofs
+        listenPingSent(sails, async (event: PingSentEvent) => {
+            if (!latestVaraMerkleRoot) {
+                console.warn('[WARN] Merkle Root not yet received!');
                 return;
             }
-
-            const { messageHash, nonce } = event;
-            const proof = await getMerkleProof(varaApi, messageHash);
-
-            const pingData: PingProof = {
-                messageHash,
-                nonce,
-                merkleRoot: latestMerkleRoot,
-                proof: proof.toHuman(),
-            };
+            const { sender, messageHash, nonce } = event;
+            const proof = await getMerkleProof(varaApi, messageHash as `0x${string}`);
+            const pingData: PingProof = { sender, messageHash, nonce, merkleRoot: latestVaraMerkleRoot, proof: proof.toHuman() };
             pingProofs.push(pingData);
             console.log('📥 Saved new PingProof:', pingData);
         });

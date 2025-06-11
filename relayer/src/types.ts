@@ -1,8 +1,7 @@
 export interface PingSentEvent {
     sender: string;
+    nonce: number | null;
     messageHash: string;
-    payload: string;
-    to: string;
 }
 
 export interface MerkleRootSubmittedEvent {
