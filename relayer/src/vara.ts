@@ -4,11 +4,7 @@ import { SailsIdlParser } from 'sails-js-parser';
 import { H256 } from '@polkadot/types/interfaces';
 import { VARA_RPC_URL, CROSS_PING_IDL, CROSS_PING_PROGRAM_ID } from './config';
 
-export interface PingSentEvent {
-  sender: string;
-  nonce: number | null;
-  messageHash: '0x${string}';
-}
+import { PingSentEvent } from './types';
 
 export let varaProvider: GearApi | null = null;
 export let sails: Sails;
