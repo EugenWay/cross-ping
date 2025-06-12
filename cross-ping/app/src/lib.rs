@@ -35,6 +35,7 @@ pub enum Error {
 #[derive(Debug, Encode, Decode, TypeInfo)]
 pub struct PingSent {
     pub sender: ActorId,
+    pub to: H160,
     pub nonce: Option<u64>,
     pub message_hash: H256,
 }
@@ -75,6 +76,7 @@ impl CrossPingService {
             BridgeResponse::EthMessageQueued { nonce, hash } => {
                 self.emit_event(Event::PingSent(PingSent {
                     sender,
+                    to: destination,
                     nonce: Some(nonce.as_u64()),
                     message_hash: hash,
                 })).expect("Failed to emit PingSent event");
