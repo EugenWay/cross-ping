@@ -44,6 +44,7 @@ export async function listenPingSent(sails: Sails, onPingSent: (event: PingSentE
     sails.services.CrossPing.events.PingSent.subscribe((data: any) => {
         onPingSent({
         sender: data.sender,
+        to: data.to,
         nonce: data.nonce,
         messageHash: data.message_hash,
         });

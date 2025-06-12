@@ -1,17 +1,30 @@
 export interface PingSentEvent {
     sender: string;
+    to: string;
     nonce: number | null;
     messageHash: string;
 }
 
-export interface MerkleRootSubmittedEvent {
-    root: string;
+export interface PingMessage {
+    sender: string;
+    to: string;
+    messageHash: string;
+    nonce: number | null;
+    merkleRoot: string;
+    proof: string[];
+    number_of_leaves: string;
+    leaf_index: string;
+    leaf: string;
 }
-
 export interface MerkleProof {
     root: string;
     proof: string[];
+    number_of_leaves: string;
+    leaf_index: string;
     leaf: string;
+}
+export interface MerkleRootSubmittedEvent {
+    root: string;
 }
 
 export interface VaraApi {
