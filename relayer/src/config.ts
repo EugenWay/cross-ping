@@ -22,6 +22,7 @@ type Error = enum {
 
 type PingSent = struct {
   sender: actor_id,
+  to: h160,
   nonce: opt u64,
   message_hash: h256,
 };

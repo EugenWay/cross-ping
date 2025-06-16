@@ -1,4 +1,5 @@
 import { ethers } from 'ethers';
+
 import { ETHEREUM_RPC_URL, RELAYER_PROXY_ADDRESS, MESSAGE_QUEUE_PROXY_ADDRESS, PRIVATE_KEY, RELAYER_PROXY_ABI, MESSAGE_QUEUE_PROXY_ABI } from './config';
 
 export let walletSigner: ethers.Wallet | null = null;
@@ -40,7 +41,7 @@ export async function sendProcessMessage(
     block_number: number,
     total_leaves: number,
     leaf_index: number,
-    nonce: string,
+    nonce: number,
     sender: string,
     receiver: string,
     data: string,
@@ -51,17 +52,34 @@ export async function sendProcessMessage(
         MESSAGE_QUEUE_PROXY_ABI,
         signer
     );
-    const message = { nonce, sender, receiver, data };
+
+    const formattedNonce = numberToBytes32LE(nonce);
+    const message = { nonce: formattedNonce, sender, receiver, data };
+
+    console.log("trx", 
+        block_number,
+        total_leaves,
+        leaf_index,
+        message,
+        proof,
+    );
+
     const tx = await contract.processMessage(
         block_number,
         total_leaves,
         leaf_index,
         message,
         proof,
-        { gasLimit: 5_000_000 }
+        { gasLimit: 20_000_000 }
     );
     console.log("Tx sent:", tx.hash);
     await tx.wait();
     console.log("Tx confirmed!");
     return tx;
+}
+
+function numberToBytes32LE(nonce: number) {
+    let hex = nonce.toString(16).padStart(64, '0');
+    let bytes = (hex.match(/../g) || []).reverse().join('');
+    return '0x' + bytes;
 }

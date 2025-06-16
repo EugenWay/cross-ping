@@ -54,7 +54,6 @@ async function main() {
                 console.log('[Ethereum] No messages for this Merkle Root:', root);
                 return;
             }
-
             console.log(`✅ [Ethereum] MerkleRootSubmitted: ${root}. Relaying ${toRelay.length} messages.`);
 
             toRelay.forEach(pingMessage => {
@@ -63,10 +62,10 @@ async function main() {
                     Number(blockNumber),
                     Number(pingMessage.number_of_leaves),
                     Number(pingMessage.leaf_index),
-                    pingMessage.nonce?.toString() || '0',
+                    Number(pingMessage.nonce),
                     pingMessage.sender,
                     pingMessage.to,
-                    pingMessage.messageHash,
+                    pingMessage.sender, // payload like set of bytes
                     pingMessage.proof
                 );
             });
