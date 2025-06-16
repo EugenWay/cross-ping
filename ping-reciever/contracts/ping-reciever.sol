@@ -6,7 +6,7 @@ interface IMessageQueueReceiver {
 }
 
 contract PingReceiver is IMessageQueueReceiver {
-    event PongEmitted(bytes32 sender); // Только sender из VARA
+    event PongEmitted(bytes32 sender);
 
     function processVaraMessage(bytes32 sender, bytes calldata) external override returns (bool) {
         emit PongEmitted(sender);
