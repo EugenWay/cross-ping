@@ -9,13 +9,13 @@ relayer/yarn.lock
 relayer/dist/
 relayer/.env
 
-# === ping-reciever ===
-ping-reciever/artifacts/
-ping-reciever/cache/
-ping-reciever/typechain-types/
-ping-reciever/node_modules/
-ping-reciever/yarn.lock
-ping-reciever/.env
+# === ping-receiver ===
+ping-receiver/artifacts/
+ping-receiver/cache/
+ping-receiver/typechain-types/
+ping-receiver/node_modules/
+ping-receiver/yarn.lock
+ping-receiver/.env
 
 # === System files ===
-.DS_Store 
+.DS_Store
