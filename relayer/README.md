@@ -4,8 +4,6 @@ This is the relayer for the Vara ↔ Ethereum CrossPing example.
 
 The relayer listens for new messages on the Vara network, collects proofs, and delivers them to Ethereum for trustless processing via the Vara ↔ Ethereum Bridge.
 
----
-
 ## What does this application do?
 
 - Listens to the Vara blockchain for `PingSent` and Merkle root events.
@@ -15,14 +13,12 @@ The relayer listens for new messages on the Vara network, collects proofs, and d
 
 It is implemented in Node.js, but any language can be used as long as it supports required APIs.
 
----
 
 ## Requirements
 
 - Node.js (v18+ recommended)
 - Yarn (`npm install -g yarn`)
 
----
 
 ## (`.env`)
 
@@ -37,8 +33,6 @@ MESSAGE_QUEUE_PROXY_ADDRESS=0x60430248f49376860e2047aCdaFF71D3Eb6ce41c
 # PRIVATE_KEY=your_eth_private_key_here
 ```
 
----
-
 ## Building & Running
 
 Install dependencies:
@@ -52,8 +46,6 @@ Start the relayer:
 ```sh
 yarn dev
 ```
-
----
 
 ## Project Structure
 
