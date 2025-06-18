@@ -1,57 +1,64 @@
-# Cross-chain Relayer
+# Relayer for CrossPing
 
-Node.js (TypeScript) сервис для релея сообщений между Vara и Ethereum.
+This is the relayer for the Vara ↔ Ethereum CrossPing example.
 
-## Структура
-- `src/config.ts` — все константы и конфиги
-- `src/vara.ts` — модуль для подключения к Vara и прослушивания событий
-- `src/ethereum.ts` — модуль для подключения к Ethereum и прослушивания событий
-- `src/index.ts` — инициализация, запуск listeners
-- `.env` — приватные данные (RPC, ключи)
+The relayer listens for new messages on the Vara network, collects proofs, and delivers them to Ethereum for trustless processing via the Vara ↔ Ethereum Bridge.
 
-## Установка
+---
 
-1. Установите зависимости:
-```bash
-npm install
-```
+## What does this application do?
 
-2. Создайте файл `.env` и заполните следующие переменные:
+- Listens to the Vara blockchain for `PingSent` and Merkle root events.
+- Fetches Merkle proofs and message metadata from Vara.
+- Waits for the Merkle root to be submitted to Ethereum (RelayerProxy).
+- Submits messages (with proofs) to the Ethereum MessageQueue contract for final delivery.
+
+It is implemented in Node.js, but any language can be used as long as it supports required APIs.
+
+---
+
+## Requirements
+
+- Node.js (v18+ recommended)
+- Yarn (`npm install -g yarn`)
+
+---
+
+## (`.env`)
+
+Create a `.env` file in the project root with the following variables:
+
 ```env
-VARA_RPC_URL=wss://vara-rpc.example/ws
-ETHEREUM_RPC_URL=https://ethereum-holesky.example
-RELAYER_PRIVATE_KEY=your-eth-private-key
-ETHEREUM_MESSAGE_QUEUE_CONTRACT=0x...
-ETHEREUM_RELAYER_PROXY_CONTRACT=0x...
+VARA_RPC_URL=wss://testnet.vara.network
+ETHEREUM_RPC_URL=wss://reth-rpc.gear-tech.io/ws
+CROSS_PING_PROGRAM_ID=0x8e3f07ea8c47f40eb9958102005130944dab9a6ffbfe335c2e7f4a5082f51bf9
+RELAYER_PROXY_ADDRESS=0x602Da93eee9C30Ed2d8c72032B8845cd76d917d2
+MESSAGE_QUEUE_PROXY_ADDRESS=0x60430248f49376860e2047aCdaFF71D3Eb6ce41c
+# PRIVATE_KEY=your_eth_private_key_here
 ```
 
-## Запуск
+---
 
-Для разработки:
-```bash
-npm run dev
+## Building & Running
+
+Install dependencies:
+
+```sh
+yarn install
 ```
 
-Для продакшена:
-```bash
-npm run build
-npm start
+Start the relayer:
+
+```sh
+yarn dev
 ```
 
-## Как это работает
+---
 
-1. Релейер слушает сеть Vara на событие `PingSent`
-2. При получении события, запрашивает `merkleProof` для `messageHash`
-3. Слушает контракт RelayerProxy на Ethereum на событие `MerkleRootSubmitted`
-4. Когда получен новый MerkleRoot, использует его для проверки proof
-5. Вызывает `processMessage()` в MessageQueue контракте с:
-   - merkleProof
-   - messageHash
-   - message.payload
-   - to (адрес контракта-получателя)
+## Project Structure
 
-## Безопасность
-
-- Никогда не коммитьте файл `.env` в репозиторий
-- Храните приватные ключи в безопасном месте
-- Используйте разные ключи для разработки и продакшена 
+- `src/config.ts` — configuration constants and IDL's
+- `src/vara.ts` — Vara connection & event listeners
+- `src/ethereum.ts` — Ethereum connection & event listeners
+- `src/main.ts` — entry point, listeners orchestration
+- `.env` — environment variables (RPC endpoints, contract addresses, private key)
